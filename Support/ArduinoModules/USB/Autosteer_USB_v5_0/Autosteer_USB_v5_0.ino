@@ -85,9 +85,10 @@
   uint8_t aog2Count = 0;
   float sensorReading, sensorSample;
 
-  // booleans to see if we are using CMPS or BNO08x
+  // booleans to see if we are using CMPS or BNO08x or WT61p or WT901
   bool useCMPS = false;
   bool useBNO08x = false;
+  bool useWIT = false;
 
   // BNO08x address variables to check where it is
   const uint8_t bno08xAddresses[] = {0x4A,0x4B};
@@ -101,6 +102,11 @@
 
   int16_t bno08xHeading10x = 0;
   int16_t bno08xRoll10x = 0;
+  
+  // Witmotion variables
+  #define WIT_ADDRESS 0x50
+  int16_t witHeading = 0;
+  int16_t witRoll = 0;
   
   //EEPROM
   int16_t EEread = 0;
@@ -197,6 +203,7 @@
     //set up communication
     Wire.begin();
     Serial.begin(38400);
+    delay(100); //delay for the BNO to be detected
   
     //test if CMPS working
     uint8_t error;
@@ -269,6 +276,29 @@
           Serial.println("Error = 4");
           Serial.println("BNO08X not Connected or Found"); 
         }
+      }
+    }
+    
+    // Check for Witmotion
+    if (!useCMPS && !useBNO08x) {
+      Serial.print("\r\nChecking for Witmotion on ");
+      Serial.println(WIT_ADDRESS, HEX);
+      Wire.beginTransmission(WIT_ADDRESS);
+      error = Wire.endTransmission();
+      
+      if (error == 0)
+      {
+        Serial.println("Error = 0");
+        Serial.print("Wit ADDRESs: 0x");
+        Serial.println(WIT_ADDRESS, HEX);
+        Serial.println("Witmotion Ok.");
+        useWIT = true;
+      }
+      else
+      {
+        Serial.println("Error = 4");
+        Serial.println("Witmotion not Connected or Found");
+        useWIT = false;
       }
     }
     
@@ -617,6 +647,43 @@
                     PGN_253[9] = (uint8_t)bno08xRoll10x;
                     PGN_253[10] = bno08xRoll10x >> 8;
                 }
+            }
+            else if (useWIT)
+            {
+                Wire.beginTransmission(WIT_ADDRESS);
+                Wire.write(0x3F);
+                Wire.endTransmission(false);
+                
+                Wire.requestFrom(WIT_ADDRESS, 2);
+                while (Wire.available() < 2);
+                
+                //the heading x10
+                witHeading = ((float)(Wire.read() | Wire.read() << 8))/32768*1800;
+                
+                Wire.beginTransmission(WIT_ADDRESS);
+                Wire.write(0x3D);
+                Wire.endTransmission(false);
+                
+                Wire.requestFrom(WIT_ADDRESS, 2);
+                while (Wire.available() < 2);
+                
+                //the roll x10
+                witRoll = ((float)(Wire.read() | Wire.read() << 8))/32768*1800;
+                
+                witHeading = -witHeading;
+                
+                if (witHeading < 0 && witHeading >= -1800) //Scale WTxxx yaw from [-180°;180°] to [0;360°]
+                {
+                    witHeading = witHeading + 3600;
+                }
+                                
+                //the heading x10
+                PGN_253[7] = (uint8_t)witHeading;
+                PGN_253[8] = witHeading >> 8;
+                
+                //the roll x10
+                PGN_253[9] = (uint8_t)witRoll;
+                PGN_253[10] = witRoll >> 8;
             }
             else
             {

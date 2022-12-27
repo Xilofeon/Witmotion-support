@@ -76,8 +76,8 @@ void GGA_Handler() //Rec'd GGA
     {
        dualReadyGGA = true;
     }
-
-    if (useBNO08x || useCMPS)
+    
+    if (useBNO08x || useCMPS || useWIT)
     {
        imuHandler();          //Get IMU data ready
        BuildNmea();           //Build & send data GPS data to AgIO (Both Dual & Single)
@@ -88,7 +88,7 @@ void GGA_Handler() //Rec'd GGA
         digitalWrite(GPSGREEN_LED, LOW);   //Make sure the Green LED is OFF     
        }
     }
-    else if (!useBNO08x && !useCMPS && !useDual) 
+    else if (!useBNO08x && !useCMPS && !useWIT && !useDual) 
     {
         digitalWrite(GPSRED_LED, blink);   //Flash red GPS LED, we have GGA but no IMU or dual
         digitalWrite(GPSGREEN_LED, LOW);   //Make sure the Green LED is OFF
@@ -215,7 +215,64 @@ void imuHandler()
         itoa(0, imuYawRate, 10);
     }
 
-    if (useBNO08x)
+    else if (useWIT)
+    {
+        //roll
+        Wire.beginTransmission(WIT_ADDRESS);
+        Wire.write(0x3D);
+        Wire.endTransmission(false);
+
+        Wire.requestFrom(WIT_ADDRESS, 2);
+        while (Wire.available() < 2);
+
+        //Scale Wit roll from [0°;360°] to [-180°;180°]
+        roll = (((float)(Wire.read() | Wire.read() << 8))/32768*1800)-3600;
+        if (roll <= -1800)
+          roll = 3600 + roll;
+
+        temp = (int16_t)roll;
+        itoa(temp, imuRoll, 10);
+
+        // Yaw
+        Wire.beginTransmission(WIT_ADDRESS);
+        Wire.write(0x3F);
+        Wire.endTransmission(false);
+
+        Wire.requestFrom(WIT_ADDRESS, 2);
+        while (Wire.available() < 2);
+
+        //Scale Wit Yaw from [360°;0°] to [0°;360°]
+        temp = 3600-(((float)(Wire.read() | Wire.read() << 8))/32768*1800);
+        itoa(temp, imuHeading, 10);
+
+        // Pitch
+        Wire.beginTransmission(WIT_ADDRESS);
+        Wire.write(0x3E);
+        Wire.endTransmission(false);
+
+        Wire.requestFrom(WIT_ADDRESS, 2);
+        while (Wire.available() < 2);
+
+        //Scale Wit Pitch from [0°;360°] to [0°;-0°] (0° to 180° and -180° to -0°)
+        pitch = ((float)(Wire.read() | Wire.read() << 8))/32768*1800;
+        if (pitch >= 1800) pitch = pitch - 3600;
+        itoa(pitch, imuPitch, 10);
+
+        /*//Z gyro
+        Wire.beginTransmission(WIT_ADDRESS);
+        Wire.write(0x39);
+        Wire.endTransmission(false);
+
+        Wire.requestFrom(WIT_ADDRESS, 2);
+        while (Wire.available() < 2);*/
+
+        temp = 0;//((float)(Wire.read() | Wire.read() << 8))/32768*2000;
+        //Serial.print("WIT ");
+        //Serial.println(temp);
+        itoa(temp, imuYawRate, 10);
+    }
+
+    else if (useBNO08x)
     {
         //BNO is reading in its own timer    
         // Fill rest of Panda Sentence - Heading
@@ -238,7 +295,7 @@ void imuHandler()
     if (useDual)
     {
         // We have a IMU so apply the dual/IMU roll/heading error to the IMU data.
-        if (useCMPS || useBNO08x)
+        if (useCMPS || useBNO08x || useWIT)
         {
             float dualTemp;   //To convert IMU data (x10) to a float for the PAOGI so we have the decamal point
                      
