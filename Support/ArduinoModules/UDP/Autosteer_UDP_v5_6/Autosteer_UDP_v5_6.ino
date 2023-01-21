@@ -16,7 +16,7 @@
     ////////////////// User Settings /////////////////////////  
 
     //How many degrees before decreasing Max PWM
-    #define LOW_HIGH_DEGREES 5.0
+    #define LOW_HIGH_DEGREES 3.0
 
     /*  PWM Frequency -> 
     *   490hz (default) = 0
@@ -108,11 +108,11 @@
     int16_t helloSteerPosition = 0;
 
     //fromAutoSteerData FD 253 - ActualSteerAngle*100 -5,6, SwitchByte-7, pwmDisplay-8
-    uint8_t PGN_253[] = {128, 129, 123, 253, 8, 0, 0, 0, 0, 0,0,0,0, 12 };
+    uint8_t PGN_253[] = {128, 129, 126, 253, 8, 0, 0, 0, 0, 0,0,0,0, 12 };
     int8_t PGN_253_Size = sizeof(PGN_253) - 1;
 
     //fromAutoSteerData FD 250 - sensor values etc
-    uint8_t PGN_250[] = { 128, 129, 123, 250, 8, 0, 0, 0, 0, 0,0,0,0, 12 };
+    uint8_t PGN_250[] = { 128, 129, 126, 250, 8, 0, 0, 0, 0, 0,0,0,0, 12 };
     int8_t PGN_250_Size = sizeof(PGN_250) - 1;
 
     uint8_t aog2Count = 0;
@@ -147,7 +147,7 @@
     //Relays
     bool isRelayActiveHigh = true;
     uint8_t relay = 0, relayHi = 0, uTurn = 0;
-    uint8_t tram = 0;
+    uint8_t xte = 0;
     
     //Switches
     uint8_t remoteSwitch = 0, workSwitch = 0, steerSwitch = 1, switchByte = 0;
@@ -634,7 +634,7 @@
               }
 
               //Bit 10 Tram 
-              tram = udpData[10];
+              xte = udpData[10];
 
               //Bit 11
               relay = udpData[11];
@@ -811,11 +811,11 @@
           else if (udpData[3] == 252)
           {
               //PID values
-              steerSettings.Kp = ((float)udpData[5]);   // read Kp from AgOpenGPS
+              steerSettings.Kp = udpData[5];   // read Kp from AgOpenGPS
 
               steerSettings.highPWM = udpData[6]; // read high pwm
 
-              steerSettings.lowPWM = (float)udpData[7];   // read lowPWM from AgOpenGPS              
+              steerSettings.lowPWM = udpData[7];   // read lowPWM from AgOpenGPS              
 
               steerSettings.minPWM = udpData[8]; //read the minimum amount of PWM for instant on
               
