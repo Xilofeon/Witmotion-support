@@ -26,12 +26,12 @@
     #define PWM_Frequency 0
   
     // Change this number to reset and reload default parameters To EEPROM
-    #define EEP_Ident 0x5417
+    #define EEP_Ident 0x3378
 
     struct ConfigIP {
         uint8_t ipOne = 192;
         uint8_t ipTwo = 168;
-        uint8_t ipThree = 1;
+        uint8_t ipThree = 5;
     };  ConfigIP networkAddress;   //3 bytes
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,13 +246,13 @@
           Serial.println("Error = 0");
           Serial.print("CMPS14 ADDRESs: 0x");
           Serial.println(CMPS14_ADDRESS, HEX);
-          Serial.println("CMPS14 Ok.");
+          Serial.println("CMPS14 Ok.\r\n");
           useCMPS = true;
       }
       else
       {
           Serial.println("Error = 4");
-          Serial.println("CMPS not Connected or Found");
+          Serial.println("CMPS not Connected or Found\r\n");
           useCMPS = false;
       }
 
@@ -273,7 +273,7 @@
                   Serial.println("Error = 0");
                   Serial.print("BNO08X ADDRESs: 0x");
                   Serial.println(bno08xAddress, HEX);
-                  Serial.println("BNO08X Ok.");
+                  Serial.println("BNO08X Ok.\r\n");
 
                   // Initialize BNO080 lib        
                   if (bno08x.begin(bno08xAddress))
@@ -294,7 +294,7 @@
                       }
                       else
                       {
-                          Serial.println("BNO08x init fails!!");
+                          Serial.println("BNO08x init fails!!\r\n");
                       }
                   }
                   else
@@ -321,13 +321,13 @@
               Serial.println("Error = 0");
               Serial.print("Wit ADDRESs: 0x");
               Serial.println(WIT_ADDRESS, HEX);
-              Serial.println("Witmotion Ok.");
+              Serial.println("Witmotion Ok.\r\n");
               useWIT = true;
           }
           else
           {
               Serial.println("Error = 4");
-              Serial.println("Witmotion not Connected or Found");
+              Serial.println("Witmotion not Connected or Found\r\n");
               useWIT = false;
           }
       }
@@ -367,6 +367,7 @@
       ipDestination[1] = networkAddress.ipTwo;
       ipDestination[2] = networkAddress.ipThree;
 
+      Serial.println();
       //set up connection
       ether.staticSetup(myip, gwip, myDNS, mask);
       ether.printIp("_IP_: ", ether.myip);
@@ -376,7 +377,7 @@
       //register to port 8888
       ether.udpServerListenOnPort(&udpSteerRecv, 8888);
 
-      Serial.println("Setup complete, waiting for AgOpenGPS");
+      Serial.println("\r\nSetup complete, waiting for AgOpenGPS");
 
       adc.setSampleRate(ADS1115_REG_CONFIG_DR_128SPS); //128 samples per second
       adc.setGain(ADS1115_REG_CONFIG_PGA_6_144V);
@@ -883,21 +884,29 @@
                   networkAddress.ipTwo = udpData[8];
                   networkAddress.ipThree = udpData[9];
 
+                  Serial.print("\r\n Subnet Changed to: ");
+                  Serial.print(udpData[7]); Serial.print(" . ");
+                  Serial.print(udpData[8]); Serial.print(" . ");
+                  Serial.print(udpData[9]); Serial.println();
+
+                  delay(100);
+
                   //save in EEPROM and restart
                   EEPROM.put(60, networkAddress);
                   resetFunc();
               }
           }//end FB
 
-                      //whoami
+          //scan reply
           else if (udpData[3] == 202)
           {
               //make really sure this is the reply pgn
               if (udpData[4] == 3 && udpData[5] == 202 && udpData[6] == 202)
               {
-                  //hello from AgIO
-                  uint8_t scanReply[] = { 128, 129, 126, 203, 4,
-                      networkAddress.ipOne, networkAddress.ipTwo, networkAddress.ipThree, 126, 23 };
+                  //reply AgIO
+                  uint8_t scanReply[] = { 128, 129, 126, 203, 7,
+                      networkAddress.ipOne, networkAddress.ipTwo, networkAddress.ipThree, 126,
+                      src_ip[0], src_ip[1], src_ip[2], 23 };
 
                   //checksum
                   int16_t CK_A = 0;
@@ -910,8 +919,28 @@
                   static uint8_t ipDest[] = { 255,255,255,255 };
                   uint16_t portDest = 9999; //AOG port that listens
 
+                  Serial.print("\r\nAdapter IP: ");
+                  Serial.print(src_ip[0]); Serial.print(" . ");
+                  Serial.print(src_ip[1]); Serial.print(" . ");
+                  Serial.print(src_ip[2]); Serial.print(" . ");
+                  Serial.print(src_ip[3]);
+                  
                   //off to AOG
                   ether.sendUdp(scanReply, sizeof(scanReply), portMy, ipDest, portDest);
+
+                  Serial.print("\r\n Module IP: ");
+                  Serial.print(src_ip[0]); Serial.print(" . ");
+                  Serial.print(src_ip[1]); Serial.print(" . ");
+                  Serial.print(src_ip[2]); Serial.print(" . ");
+                  Serial.print(src_ip[3]); Serial.println();
+ 
+                  Serial.print("CurrentSensor: ");
+                  Serial.println(sensorReading);
+                  Serial.print("Steer Counts: ");
+                  Serial.println(helloSteerPosition);
+                  Serial.print("Switch Byte: ");
+                  Serial.println(switchByte);
+                  Serial.println(" --------- ");
               }
           }
 

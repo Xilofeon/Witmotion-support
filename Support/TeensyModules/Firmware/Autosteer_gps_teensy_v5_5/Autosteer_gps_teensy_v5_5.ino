@@ -391,9 +391,12 @@ void loop()
                 {
                     uint8_t res[100];
 
+                    // not needed, get rid of warnings
+                    /*
                     // Poll navigation data byte -> UBX-NAV-PVT
                     byte mon_ver[] = {0xB5, 0x62, 0x0A, 0x04, 0x00, 0x00, 0x0E, 0x34};
-
+                    */
+                    
                     // first send dumb data to make sure its on
                     SerialGPS->write(0xFF);
 

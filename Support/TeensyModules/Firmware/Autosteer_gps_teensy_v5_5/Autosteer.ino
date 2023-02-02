@@ -80,11 +80,11 @@ uint8_t helloFromAutoSteer[] = { 0x80, 0x81, 126, 126, 5, 0, 0, 0, 0, 0, 71 };
 int16_t helloSteerPosition = 0;
 
 //fromAutoSteerData FD 253 - ActualSteerAngle*100 -5,6, SwitchByte-7, pwmDisplay-8
-uint8_t PGN_253[] = {0x80,0x81, 0x7D, 0xFD, 8, 0, 0, 0, 0, 0,0,0,0, 0xCC };
+uint8_t PGN_253[] = {0x80,0x81, 126, 0xFD, 8, 0, 0, 0, 0, 0,0,0,0, 0xCC };
 int8_t PGN_253_Size = sizeof(PGN_253) - 1;
 
 //fromAutoSteerData FD 250 - sensor values etc
-uint8_t PGN_250[] = { 0x80,0x81, 0x7B, 0xFA, 8, 0, 0, 0, 0, 0,0,0,0, 0xCC };
+uint8_t PGN_250[] = { 0x80,0x81, 126, 0xFA, 8, 0, 0, 0, 0, 0,0,0,0, 0xCC };
 int8_t PGN_250_Size = sizeof(PGN_250) - 1;
 uint8_t aog2Count = 0;
 float sensorReading;
@@ -347,7 +347,7 @@ void autosteerLoop()
     if (steerConfig.CurrentSensor)
     {
       sensorSample = (float)analogRead(CURRENT_SENSOR_PIN);
-      sensorSample = (abs(512 - sensorSample)) * 0.5;
+      sensorSample = (abs(775 - sensorSample)) * 0.5;
       sensorReading = sensorReading * 0.7 + sensorSample * 0.3;
       if (sensorReading >= steerConfig.PulseCountMax)
       {
@@ -721,9 +721,12 @@ void ReceiveUdp()
                 //make really sure this is the reply pgn
                 if (autoSteerUdpData[4] == 3 && autoSteerUdpData[5] == 202 && autoSteerUdpData[6] == 202)
                 {
+                    IPAddress rem_ip = Eth_udpAutoSteer.remoteIP();
+
                     //hello from AgIO
-                    uint8_t scanReply[] = { 128, 129, Eth_myip[3], 203, 4,
-                        Eth_myip[0], Eth_myip[1], Eth_myip[2], Eth_myip[3], 23 };
+                    uint8_t scanReply[] = { 128, 129, Eth_myip[3], 203, 7,
+                        Eth_myip[0], Eth_myip[1], Eth_myip[2], Eth_myip[3], 
+                        rem_ip[0],rem_ip[1],rem_ip[2], 23 };
 
                     //checksum
                     int16_t CK_A = 0;
