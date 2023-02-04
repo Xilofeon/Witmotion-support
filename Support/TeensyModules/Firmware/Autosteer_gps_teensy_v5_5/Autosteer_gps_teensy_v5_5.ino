@@ -11,7 +11,7 @@
 // Configuration of receiver
 // Position F9P
 // CFG-RATE-MEAS - 100 ms -> 10 Hz
-// CFG-UART1-BAUDRATE 115200
+// CFG-UART1-BAUDRATE 460800
 // Serial 1 In - RTCM (Correction Data from AOG)
 // Serial 1 Out - NMEA GGA
 // CFG-UART2-BAUDRATE 460800
@@ -20,7 +20,7 @@
 //
 // Heading F9P
 // CFG-RATE-MEAS - 100 ms -> 10 Hz
-// CFG-UART1-BAUDRATE 115200
+// CFG-UART1-BAUDRATE 460800
 // Serial 1 Out - UBX-NAV-RELPOSNED
 // CFG-UART2-BAUDRATE 460800
 // Serial 2 In RTCM
@@ -389,7 +389,7 @@ void loop()
 
                 do
                 {
-                    uint8_t res[100];
+                    //uint8_t res[100];
 
                     // not needed, get rid of warnings
                     /*
@@ -408,7 +408,7 @@ void loop()
 
                     uint32_t millis_read = systick_millis_count;
                     constexpr uint32_t UART_TIMEOUT = 1000;
-                    int i = 0;
+                    //int i = 0;
 
                     do
                     {
@@ -416,8 +416,9 @@ void loop()
                         
                         while (SerialGPS->available() > 0) 
                         {
-                            res[i++] = SerialGPS->read();
-                            if (i < 100) continue;
+                            SerialGPS->read();
+                            //res[i++] = SerialGPS->read();
+                            //if (i < 100) continue;
                         }
                     } while (systick_millis_count - millis_read < UART_TIMEOUT);
                 } while (!communicationSuccessfull);
