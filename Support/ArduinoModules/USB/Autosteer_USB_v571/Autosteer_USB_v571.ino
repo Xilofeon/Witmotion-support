@@ -627,9 +627,10 @@
                     {
                         bno08xHeading = bno08xHeading + 360;
                     }
-
-                    bno08xRoll = (bno08x.getRoll()) * CONST_180_DIVIDED_BY_PI; //Convert roll to degrees
-                    //bno08xPitch = (bno08x.getPitch())* CONST_180_DIVIDED_BY_PI; // Convert pitch to degrees
+                    if (steerConfig.IsUseY_Axis)
+                      bno08xPitch = (bno08x.getPitch())* CONST_180_DIVIDED_BY_PI; // Convert pitch to degrees
+                    else
+                      bno08xRoll = (bno08x.getRoll()) * CONST_180_DIVIDED_BY_PI; //Convert roll to degrees
 
                     bno08xHeading10x = (int16_t)(bno08xHeading * 10);
                     bno08xRoll10x = (int16_t)(bno08xRoll * 10);
@@ -799,6 +800,7 @@
         if (bitRead(sett, 0)) steerConfig.IsDanfoss = 1; else steerConfig.IsDanfoss = 0;
         if (bitRead(sett, 1)) steerConfig.PressureSensor = 1; else steerConfig.PressureSensor = 0;
         if (bitRead(sett, 2)) steerConfig.CurrentSensor = 1; else steerConfig.CurrentSensor = 0;
+        if (bitRead(sett, 3)) steerConfig.IsUseY_Axis = 1; else steerConfig.IsUseY_Axis = 0;
               
         Serial.read(); //byte 9
         Serial.read(); //byte 10
