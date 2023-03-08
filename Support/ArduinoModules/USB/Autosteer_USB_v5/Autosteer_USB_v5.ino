@@ -170,6 +170,7 @@
       uint8_t CurrentSensor = 0;
       uint8_t PulseCountMax = 5;
       uint8_t IsDanfoss = 0; 
+      uint8_t IsUseY_Axis = 0;
   };  Setup steerConfig;          //9 bytes
 
   //reset function
