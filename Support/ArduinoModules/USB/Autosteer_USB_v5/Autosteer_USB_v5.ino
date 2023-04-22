@@ -669,7 +669,11 @@
                 witHeading = ((float)(Wire.read() | Wire.read() << 8))/32768*1800;
                 
                 Wire.beginTransmission(WIT_ADDRESS);
-                Wire.write(0x3D);
+                if (steerConfig.IsUseY_Axis) {
+                  Wire.write(0x3E);
+                } else {
+                  Wire.write(0x3D);
+                }
                 Wire.endTransmission(false);
                 
                 Wire.requestFrom(WIT_ADDRESS, 2);

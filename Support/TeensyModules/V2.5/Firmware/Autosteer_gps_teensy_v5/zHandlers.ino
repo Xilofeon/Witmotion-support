@@ -220,13 +220,17 @@ void imuHandler()
     {
         //roll
         Wire.beginTransmission(WIT_ADDRESS);
-        Wire.write(0x3D);
+        if (steerConfig.IsUseY_Axis) {
+          Wire.write(0x3E);
+        } else {
+          Wire.write(0x3D);
+        }
         Wire.endTransmission(false);
 
         Wire.requestFrom(WIT_ADDRESS, 2);
         while (Wire.available() < 2);
 
-        //Scale Wit roll from [0°;360°] to [-180°;180°]
+        //Scale Wit roll from [0Â°;360Â°] to [-180Â°;180Â°]
         roll = (((float)(Wire.read() | Wire.read() << 8))/32768*1800)-3600;
         if (roll <= -1800)
           roll = 3600 + roll;
@@ -242,7 +246,7 @@ void imuHandler()
         Wire.requestFrom(WIT_ADDRESS, 2);
         while (Wire.available() < 2);
 
-        //Scale Wit Yaw from [360°;0°] to [0°;360°]
+        //Scale Wit Yaw from [360Â°;0Â°] to [0Â°;360Â°]
         temp = 3600-(((float)(Wire.read() | Wire.read() << 8))/32768*1800);
         itoa(temp, imuHeading, 10);
 
@@ -254,7 +258,7 @@ void imuHandler()
         Wire.requestFrom(WIT_ADDRESS, 2);
         while (Wire.available() < 2);
 
-        //Scale Wit Pitch from [0°;360°] to [0°;-0°] (0° to 180° and -180° to -0°)
+        //Scale Wit Pitch from [0Â°;360Â°] to [0Â°;-0Â°] (0Â° to 180Â° and -180Â° to -0Â°)
         pitch = ((float)(Wire.read() | Wire.read() << 8))/32768*1800;
         if (pitch >= 1800) pitch = pitch - 3600;
         itoa(pitch, imuPitch, 10);
